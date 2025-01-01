@@ -1,0 +1,70 @@
+/* General Date Picker Container */
+.react-date-picker {
+  border: 1px solid #d1d5db; /* Tailwind gray-300 */
+  border-radius: 8px;
+  padding: 4px;
+background-color: #ffffff;
+
+}
+
+/* Calendar Popup */
+.react-calendar {
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.react-date-picker__wrapper {
+  border: 0px solid #d1d5db; /* Light gray border */
+  border-radius: 6px;
+  outline: none; /* Remove focus outline */
+  box-shadow: none; /* Remove additional shadow */
+}
+
+
+
+.react-date-picker__inputGroup {
+  outline: none;
+  border: none;
+}
+
+
+/* Calendar Header (Month/Year) */
+.react-calendar__navigation {
+  background-color: #4f46e5; /* Tailwind indigo-600 */
+  color: white;
+  border-radius: 8px 8px 0 0;
+  font-weight: bold;
+}
+
+/* Weekdays */
+.react-calendar__month-view__weekdays {
+  color: #6b7280; /* Tailwind gray-500 */
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+/* Calendar Days */
+.react-calendar__tile {
+  border-radius: 6px;
+  padding: 10px;
+}
+
+/* Highlight Today */
+.react-calendar__tile--now {
+  background-color: #e0e7ff; /* Tailwind indigo-100 */
+  color: #4f46e5;
+  font-weight: bold;
+}
+
+/* Hover Effect */
+.react-calendar__tile:hover {
+  background-color: #c7d2fe; /* Tailwind indigo-200 */
+}
+
+/* Selected Date */
+.react-calendar__tile--active {
+  background-color: #4f46e5;
+  color: white;
+  font-weight: bold;
+}
