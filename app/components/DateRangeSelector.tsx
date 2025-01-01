@@ -28,25 +28,15 @@ export function DateRangeSelector({
     return `${year}-${month}-${day}`;
   };
 
-  const calculateDefaultDates = () => {
-    const today = new Date();
-    const startDate = new Date();
-    startDate.setDate(today.getDate() - 90);
-    return {
-      startDate,
-      endDate: today,
-    };
-  };
-
-  const { startDate: defaultStartDate, endDate: defaultEndDate } =
-    calculateDefaultDates();
-
+  const today = new Date();
   const [dateRangeType, setDateRangeType] = useState<"lookback" | "custom">(
     "lookback"
   );
   const [lookback, setLookback] = useState(90);
-  const [startDate, setStartDate] = useState<Date>(defaultStartDate);
-  const [endDate, setEndDate] = useState<Date>(defaultEndDate);
+  const [startDate, setStartDate] = useState<Date>(
+    new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000)
+  );
+  const [endDate, setEndDate] = useState<Date>(today);
   const [error, setError] = useState<string | null>(null);
 
   const validateDates = (start: Date, end: Date): boolean => {
@@ -89,17 +79,9 @@ export function DateRangeSelector({
     setError(null);
 
     if (value === "custom") {
-      const { startDate: newStartDate, endDate: newEndDate } =
-        calculateDefaultDates();
-      setStartDate(newStartDate);
-      setEndDate(newEndDate);
-    } else {
-      const today = new Date();
-      setStartDate(today);
-      setLookback(90);
+      setStartDate(new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000));
+      setEndDate(today);
     }
-
-    // Clear data when changing selection type
     onApply({ clear: true });
   };
 
@@ -113,7 +95,10 @@ export function DateRangeSelector({
         endDate: formatDate(endDate),
       });
     } else {
-      onApply({ lookback });
+      onApply({
+        endDate: formatDate(endDate),
+        lookback,
+      });
     }
   };
 
@@ -137,31 +122,48 @@ export function DateRangeSelector({
       </RadioGroup>
 
       <div className="flex space-x-4 items-end">
-        <div className="flex flex-col space-y-2">
-          <Label htmlFor="start-date">Start Date:</Label>
-          <DatePicker
-            value={startDate}
-            onChange={(value) => handleStartDateChange(value as Date | null)}
-            format="yyyy-MM-dd"
-            className="w-48"
-            clearIcon={null}
-            maxDate={new Date()}
-          />
-        </div>
-
-        {dateRangeType === "lookback" ? (
+        {dateRangeType === "custom" && (
           <div className="flex flex-col space-y-2">
-            <Label htmlFor="lookback-days">Lookback (Days):</Label>
-            <input
-              id="lookback-days"
-              type="number"
-              min={1}
-              value={lookback}
-              onChange={handleLookbackChange}
-              className="w-32 border p-1 rounded"
+            <Label htmlFor="start-date">Start Date:</Label>
+            <DatePicker
+              value={startDate}
+              onChange={(value) => handleStartDateChange(value as Date | null)}
+              format="yyyy-MM-dd"
+              className="w-48"
+              clearIcon={null}
+              maxDate={new Date()}
             />
           </div>
-        ) : (
+        )}
+
+        {dateRangeType === "lookback" && (
+          <>
+            <div className="flex flex-col space-y-2">
+              <Label>End Date:</Label>
+              <DatePicker
+                value={endDate}
+                onChange={(value) => handleEndDateChange(value as Date | null)}
+                format="yyyy-MM-dd"
+                className="w-48"
+                clearIcon={null}
+                maxDate={new Date()}
+              />
+            </div>
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="lookback-days">Lookback (Days):</Label>
+              <input
+                id="lookback-days"
+                type="number"
+                min={1}
+                value={lookback}
+                onChange={handleLookbackChange}
+                className="w-32 border p-1 rounded"
+              />
+            </div>
+          </>
+        )}
+
+        {dateRangeType === "custom" && (
           <div className="flex flex-col space-y-2">
             <Label>End Date:</Label>
             <DatePicker

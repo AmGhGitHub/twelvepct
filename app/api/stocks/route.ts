@@ -4,6 +4,7 @@ import yahooFinance from "yahoo-finance2";
 
 const ETFs = ["SPY", "IWM", "MDY", "QQQ", "SHY", "TLT", "JNK"] as const;
 const MAX_DAYS = 365 * 2; // Maximum 2 years of data
+const DEFAULT_LOOKBACK = 90; // Default lookback period
 
 function isValidDate(dateStr: string): boolean {
   const date = new Date(dateStr);
@@ -18,46 +19,53 @@ function getDateRange(params: URLSearchParams): {
   startDate: Date;
   endDate: Date;
 } {
-  let endDate = new Date();
-  endDate.setHours(0, 0, 0, 0);
-  let startDate: Date;
-
-  const customStartDate = params.get("startDate");
+  // Initialize endDate
+  let endDate: Date;
   const customEndDate = params.get("endDate");
 
-  if (
-    customStartDate &&
-    customEndDate &&
-    isValidDate(customStartDate) &&
-    isValidDate(customEndDate)
-  ) {
-    startDate = new Date(customStartDate);
-    startDate.setHours(0, 0, 0, 0);
-    const parsedEndDate = new Date(customEndDate);
-    parsedEndDate.setHours(0, 0, 0, 0);
-
-    if (parsedEndDate <= endDate) {
-      endDate.setTime(parsedEndDate.getTime());
-    }
+  // Set end date
+  if (customEndDate && isValidDate(customEndDate)) {
+    endDate = new Date(customEndDate);
   } else {
-    const lookback = Math.min(
-      parseInt(params.get("lookback") || "30", 10),
+    endDate = new Date();
+  }
+  endDate.setHours(0, 0, 0, 0);
+
+  // Initialize startDate
+  let startDate: Date;
+  const lookback = params.get("lookback");
+  const customStartDate = params.get("startDate");
+
+  // Handle lookback period case
+  if (lookback) {
+    const lookbackDays = Math.min(
+      Math.max(parseInt(lookback, 10), 1),
       MAX_DAYS
     );
     startDate = new Date(endDate);
-    startDate.setDate(endDate.getDate() - lookback);
+    startDate.setDate(endDate.getDate() - lookbackDays);
   }
+  // Handle custom date range case
+  else if (customStartDate && isValidDate(customStartDate)) {
+    startDate = new Date(customStartDate);
+    startDate.setHours(0, 0, 0, 0);
 
-  if (startDate > endDate) {
-    [startDate, endDate] = [endDate, startDate];
+    // Validate date range
+    const daysDiff = Math.ceil(
+      (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    if (daysDiff > MAX_DAYS) {
+      startDate = new Date(endDate);
+      startDate.setDate(endDate.getDate() - MAX_DAYS);
+    } else if (daysDiff < 0) {
+      throw new Error("Start date cannot be after end date");
+    }
   }
-
-  const daysDiff = Math.ceil(
-    (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
-  );
-  if (daysDiff > MAX_DAYS) {
+  // Default case
+  else {
     startDate = new Date(endDate);
-    startDate.setDate(endDate.getDate() - MAX_DAYS);
+    startDate.setDate(endDate.getDate() - DEFAULT_LOOKBACK);
   }
 
   return { startDate, endDate };
@@ -188,6 +196,11 @@ export async function GET(request: Request) {
         status = 429;
       } else if (error.message.includes("Invalid date")) {
         errorMessage = "Invalid date format provided";
+        status = 400;
+      } else if (
+        error.message.includes("Start date cannot be after end date")
+      ) {
+        errorMessage = error.message;
         status = 400;
       } else if (error.message.includes("Failed to fetch data for")) {
         errorMessage = error.message;
